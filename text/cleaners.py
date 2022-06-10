@@ -48,12 +48,19 @@ def collapse_whitespace(text):
 def convert_to_ascii(text):
   return unidecode(text)
 
+def replace_unlearned_interpunction(text: str):
+  return text \
+    .replace('…', '.') \
+    .replace('„', '') \
+    .replace('”', '') \
+    .replace(' - ', ', ') \
 
 def basic_cleaners(text):
   '''Basic pipeline that lowercases and collapses whitespace without transliteration.'''
   text = lowercase(text)
   text = collapse_whitespace(text)
   text = expand_abbreviations(text)
+  text = replace_unlearned_interpunction(text)
   return text
 
 
