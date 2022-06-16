@@ -50,7 +50,6 @@ def convert_to_ascii(text):
 
 def replace_unlearned_interpunction(text: str):
   return text \
-    .replace('…', '.') \
     .replace('„', '') \
     .replace('”', '') \
     .replace(' - ', ', ') \
