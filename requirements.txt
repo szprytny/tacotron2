@@ -7,3 +7,4 @@ scipy==1.0.0
 Unidecode==1.0.22
 pillow
 torch
+natsort

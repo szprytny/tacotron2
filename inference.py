@@ -4,6 +4,7 @@ import os
 sys.path.append('waveglow')
 import numpy as np
 import torch
+import natsort 
 
 from hparams import create_hparams
 from layers import TacotronSTFT
@@ -11,6 +12,7 @@ from audio_processing import griffin_lim
 from train import load_model
 from text import text_to_sequence
 from scipy.io.wavfile import write
+from denoiser import Denoiser
 
 hparams = create_hparams()
 #hparams.max_wav_value=32768.0
@@ -28,10 +30,9 @@ else:
 
 taco_stft = TacotronSTFT(hparams.filter_length, hparams.hop_length, hparams.win_length, sampling_rate=hparams.sampling_rate)
 
-waveglow = torch.load('waveglow_shmart.pt')['model']
-waveglow.cuda().eval().half()
-for k in waveglow.convinv:
-  k.float()
+waveglow = None
+denoiser = None
+model = load_model(hparams)
 
 def line_to_text_sequence(line):
   text = line.replace('\n', '')
@@ -47,8 +48,6 @@ def get_spec_from_mel(mel_outputs_postnet):
   return spec_from_mel * spec_from_mel_scaling
 
 def text_sequence_to_mel_outputs(text_sequence):
-  model = load_model(hparams)
-  model.load_state_dict(torch.load('tacotron_shmart.pt')['state_dict'])
   _ = model.cuda().eval().half()
   _, mel_outputs_postnet, _, _ = model.inference(text_sequence)
   spec_from_mel = get_spec_from_mel(mel_outputs_postnet)
@@ -60,15 +59,15 @@ def get_griffin_audio(spec):
 
 def get_waveglow_audio(mel, sigma=0.5):
   with torch.no_grad():
-    audio = hparams.max_wav_value * waveglow.infer(mel, sigma)[0]
+    audio = waveglow.infer(mel, sigma)
+    audio = denoiser(audio, strength=0.01)
+    audio = audio * hparams.max_wav_value
+    audio = audio.squeeze()
     audio = audio.cpu().numpy()
     audio = audio.astype('int16')
   return audio
 
-def save_audio_to_drive(audio, file_name):
-  output_dir = 'out'
-  if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
+def save_audio_to_drive(audio, file_name, output_dir):
   print(f'saving {file_name}')
   audio_path = os.path.join(output_dir, file_name)
   write(audio_path, hparams.sampling_rate, audio)
@@ -80,6 +79,8 @@ def mel_from_file(file_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--model_path',
+                        help='Path to tacotron state dict', type=str, default='tacotron_shmart.pt')
     parser.add_argument('-w', '--waveglow_path',
                         help='Path to waveglow state dict', type=str, default='waveglow_shmart.pt')
     parser.add_argument('-t', '--text', help='Text to synthesize', type=str)
@@ -91,20 +92,19 @@ if __name__ == "__main__":
 
     # Make directory if it doesn't exist
     if not os.path.isdir(args.output_dir):
-        os.makedirs(args.output_dir)
-        os.chmod(args.output_dir, 0o775)
+      os.makedirs(args.output_dir)
+      os.chmod(args.output_dir, 0o775)
+
+    waveglow = torch.load(args.waveglow_path)['model']
+    waveglow.cuda().eval().half()
+    for k in waveglow.convinv:
+      k.float()
+    denoiser = Denoiser(waveglow) 
+
+    model.load_state_dict(torch.load(args.model_path)['state_dict'])
 
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = False
-
-    if args.input_dir is not None:
-      file_names = os.listdir(args.input_dir)
-      mels = [mel_from_file(f'{os.path.join(args.input_dir, file_name)}') for i, file_name in enumerate(file_names)]
-    elif args.text is not None:
-      mels = list(map(text_sequence_to_mel_outputs, map(line_to_text_sequence, [args.text])))
-    else:
-      lines = open('sentences.txt', encoding="utf-8").readlines()
-      mels = list(map(text_sequence_to_mel_outputs, map(line_to_text_sequence, lines)))
 
     generate_griffin = False
     generate_waveglow = False
@@ -115,14 +115,33 @@ if __name__ == "__main__":
       elif vocoder == 'waveglow':
         generate_waveglow = True
 
-    if generate_griffin == True or generate_waveglow == True:
-      for index, mel in enumerate(mels):
-        mel_output, spec_from_mel = mel
+    if generate_griffin == False and generate_waveglow == False:
+      exit()
 
-        if generate_griffin:
-          audio_griffin = get_griffin_audio(spec_from_mel)
-          save_audio_to_drive(audio_griffin,  f'{index}_griffinlim.wav') 
+    def save_audios(mel, index):
+      mel_output, spec_from_mel = mel
+      if generate_griffin:
+        audio_griffin = get_griffin_audio(spec_from_mel)
+        save_audio_to_drive(audio_griffin,  f'{index}_griffinlim.wav', args.output_dir) 
+      
+      if generate_waveglow:
+        audio_waveglow = get_waveglow_audio(mel_output, args.sigma)
+        save_audio_to_drive(audio_waveglow, f'{index}_waveglow_{args.sigma}.wav', args.output_dir)
+    
+    if args.input_dir is not None:
+      file_names = natsort.natsorted(os.listdir(args.input_dir))
+      for i, file_name in enumerate(file_names):
+        mel = mel_from_file(f'{os.path.join(args.input_dir, file_name)}')
+        save_audios(mel, i)
+    elif args.text is not None:
+      text_sequence = line_to_text_sequence(args.text)
+      mel = text_sequence_to_mel_outputs(text_sequence)
+      save_audios(mel, 0)
+    else:
+      lines = open('sentences.txt', encoding="utf-8").readlines()
+      for index, line in enumerate(lines):
+        text_sequence = line_to_text_sequence(line)
+        mel = text_sequence_to_mel_outputs(text_sequence)
+        save_audios(mel, index)
+    
         
-        if generate_waveglow:
-          audio_waveglow = get_waveglow_audio(mel_output, args.sigma)
-          save_audio_to_drive(audio_waveglow, f'{index}_waveglow_{args.sigma}.wav')
