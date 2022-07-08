@@ -85,6 +85,7 @@ if __name__ == "__main__":
                         help='Path to waveglow state dict', type=str, default='waveglow_shmart.pt')
     parser.add_argument('-t', '--text', help='Text to synthesize', type=str)
     parser.add_argument('-i', "--input_dir") #, default="input_mels/")
+    parser.add_argument('--sentences', help='path to file with sentences to infer')
     parser.add_argument('-o', "--output_dir", default="out/")
     parser.add_argument("-s", "--sigma", default=0.5, type=float)
     parser.add_argument('-v', "--vocoder", default='waveglow', type=str)
@@ -108,14 +109,17 @@ if __name__ == "__main__":
 
     generate_griffin = False
     generate_waveglow = False
+    generate_hifigan = False
 
     for _, vocoder in enumerate(args.vocoder.split(',')):
       if vocoder == 'griffinlim':
         generate_griffin = True
       elif vocoder == 'waveglow':
         generate_waveglow = True
+      elif vocoder == 'hifigan':
+        generate_hifigan = True
 
-    if generate_griffin == False and generate_waveglow == False:
+    if generate_griffin == False and generate_waveglow == False and generate_hifigan == False:
       exit()
 
     def save_audios(mel, index):
@@ -127,6 +131,9 @@ if __name__ == "__main__":
       if generate_waveglow:
         audio_waveglow = get_waveglow_audio(mel_output, args.sigma)
         save_audio_to_drive(audio_waveglow, f'{index}_waveglow_{args.sigma}.wav', args.output_dir)
+        
+      if generate_hifigan:
+        np.save(os.path.join(args.output_dir, f'{index}_{args.sigma}.npy'), mel_output.cpu().detach().numpy(), allow_pickle=True)
     
     if args.input_dir is not None:
       file_names = natsort.natsorted(os.listdir(args.input_dir))
@@ -138,7 +145,8 @@ if __name__ == "__main__":
       mel = text_sequence_to_mel_outputs(text_sequence)
       save_audios(mel, 0)
     else:
-      lines = open('sentences.txt', encoding="utf-8").readlines()
+      path = args.sentences or 'sentences.txt'
+      lines = open(path, encoding="utf-8").readlines()
       for index, line in enumerate(lines):
         text_sequence = line_to_text_sequence(line)
         mel = text_sequence_to_mel_outputs(text_sequence)

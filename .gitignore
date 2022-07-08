@@ -2,3 +2,5 @@
 /out
 __pycache__
 input_mels/
+filelists/
+outdir/
