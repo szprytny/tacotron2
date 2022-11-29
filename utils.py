@@ -18,7 +18,7 @@ def load_wav_to_torch(full_path):
 def load_filepaths_and_text(filename, speaker, split="|"):
     with open(filename, encoding='utf-8') as f:
         filepaths_and_text = [line.strip().split(split) for line in f]
-    return filepaths_and_text if speaker is None else list(filter(lambda line: line[2] == speaker), filepaths_and_text)
+    return filepaths_and_text if speaker is None else list(filter(lambda line: line[2] == speaker, filepaths_and_text))
 
 
 def to_gpu(x):
