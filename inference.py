@@ -45,7 +45,7 @@ model = load_model(hparams)
 
 def line_to_text_sequence(line):
   text = line.replace('\n', '')
-  sequence = np.array(text_to_sequence(text, ['basic_cleaners']))[None, :]
+  sequence = np.array(text_to_sequence(text, ['shmart_cleaner']))[None, :]
   return torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
 
 def get_spec_from_mel(mel_outputs_postnet):

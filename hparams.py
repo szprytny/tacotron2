@@ -32,6 +32,7 @@ def create_hparams(hparams_string=None, verbose=False):
         training_files='/content/wavs/train.txt',
         validation_files='/content/wavs/test.txt',
         text_cleaners=['shmart_cleaner'],
+        speaker=None,
 
         ################################
         # Audio Parameters             #
