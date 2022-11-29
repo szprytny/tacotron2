@@ -15,6 +15,7 @@ hyperparameter. Some cleaners are English-specific. You'll typically want to use
 import re
 from unidecode import unidecode
 from .numbers import normalize_numbers
+from .shmart import shmart_replace
 
 
 # Regular expression matching whitespace:
@@ -48,18 +49,11 @@ def collapse_whitespace(text):
 def convert_to_ascii(text):
   return unidecode(text)
 
-def replace_unlearned_interpunction(text: str):
-  return text \
-    .replace('„', '') \
-    .replace('”', '') \
-    .replace(' - ', ', ') \
-
 def basic_cleaners(text):
   '''Basic pipeline that lowercases and collapses whitespace without transliteration.'''
   text = lowercase(text)
   text = collapse_whitespace(text)
   text = expand_abbreviations(text)
-  text = replace_unlearned_interpunction(text)
   return text
 
 
@@ -78,3 +72,6 @@ def english_cleaners(text):
   text = expand_numbers(text)
   text = collapse_whitespace(text)
   return text
+
+def shmart_cleaner(text):
+  return shmart_replace(f" {text} ")

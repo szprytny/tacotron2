@@ -188,6 +188,7 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
     # Load checkpoint if one exists
     iteration = 0
     epoch_offset = 0
+    batch_offset = 0
     if checkpoint_path is not None:
         if warm_start:
             model = warm_start_model(
@@ -199,13 +200,17 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
                 learning_rate = _learning_rate
             iteration += 1  # next iteration is iteration + 1
             epoch_offset = max(0, int(iteration / len(train_loader)))
+            batch_offset = max(0, iteration % len(train_loader))
 
     model.train()
     is_overflow = False
     # ================ MAIN TRAINNIG LOOP! ===================
     for epoch in range(epoch_offset, hparams.epochs):
         print("Epoch: {}".format(epoch))
-        for i, batch in enumerate(train_loader):
+        for batch_no, batch in enumerate(train_loader):
+            if batch_no < batch_offset : continue
+            else: batch_offset = 0
+            
             start = time.perf_counter()
             for param_group in optimizer.param_groups:
                 param_group['lr'] = learning_rate
@@ -258,9 +263,9 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-o', '--output_directory', type=str,
-                        help='directory to save checkpoints')
+                        help='directory to save checkpoints', default="/debug/")
     parser.add_argument('-l', '--log_directory', type=str,
-                        help='directory to save tensorboard logs')
+                        help='directory to save tensorboard logs', default="/debug/log")
     parser.add_argument('-c', '--checkpoint_path', type=str, default=None,
                         required=False, help='checkpoint path')
     parser.add_argument('--warm_start', action='store_true',
