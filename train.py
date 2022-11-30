@@ -168,12 +168,10 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
     model = load_model(hparams)
     learning_rate = hparams.learning_rate
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate,
-                                 weight_decay=hparams.weight_decay)
+                                weight_decay=hparams.weight_decay)
 
-    if hparams.fp16_run:
-        from apex import amp
-        model, optimizer = amp.initialize(
-            model, optimizer, opt_level='O2')
+    
+        
 
     if hparams.distributed_run:
         model = apply_gradient_allreduce(model)
@@ -217,26 +215,22 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
             model.zero_grad()
             x, y = model.parse_batch(batch)
-            y_pred = model(x)
+            
+            with torch.autocast(device_type="cuda", enabled=hparams.fp16_run):
+                y_pred = model(x)
 
-            loss = criterion(y_pred, y)
-            if hparams.distributed_run:
-                reduced_loss = reduce_tensor(loss.data, n_gpus).item()
-            else:
-                reduced_loss = loss.item()
-            if hparams.fp16_run:
-                with amp.scale_loss(loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
-            else:
+                loss = criterion(y_pred, y)
+            
+                if hparams.distributed_run:
+                    reduced_loss = reduce_tensor(loss.data, n_gpus).item()
+                else:
+                    reduced_loss = loss.item()
+            
                 loss.backward()
 
-            if hparams.fp16_run:
-                grad_norm = torch.nn.utils.clip_grad_norm_(
-                    amp.master_params(optimizer), hparams.grad_clip_thresh)
-                is_overflow = math.isnan(grad_norm)
-            else:
                 grad_norm = torch.nn.utils.clip_grad_norm_(
                     model.parameters(), hparams.grad_clip_thresh)
+                is_overflow = math.isnan(grad_norm)
 
             optimizer.step()
 
@@ -249,8 +243,8 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
             if not is_overflow and (iteration % hparams.iters_per_checkpoint == 0):
                 validate(model, criterion, valset, iteration,
-                         hparams.batch_size, n_gpus, collate_fn, logger,
-                         hparams.distributed_run, rank)
+                        hparams.batch_size, n_gpus, collate_fn, logger,
+                        hparams.distributed_run, rank)
                 if rank == 0:
                     checkpoint_path = os.path.join(
                         output_directory, "checkpoint_{}".format(iteration))
