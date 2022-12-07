@@ -17,6 +17,7 @@ rules_def: List[Tuple[str, str]] = [
     ('asilo', 'as_ilo'),
     (' tarzan', ' tar_zan'),
     ('mierzi', 'mier_zi'),
+    ('mierzł', 'mier_zł'),
     ('zinte', 'z_inte'),
     ('hunter', 'hanter'),
     (' bruce', ' brus'),
@@ -183,14 +184,52 @@ rules_def: List[Tuple[str, str]] = [
     ('cardiff', 'kardif'),
     (' hill ', ' hil '),
     ('douglas', 'daglas'),
+    ('lunch', 'lancz'),
+    ('york', 'jork'),
+    ('crowmont', 'krołmont'),
+    (' brian', 'brajan'),
+    (' withmore', 'łifmor'),
+    (' whitmore', 'łitmor'),
+    ('whitemore', 'łajtmor'),
+    (' cowell', 'kołel'),
+    ('scrooge', 'skrudż'),
+    ('marley', 'marlej'),
+    (' pepsi', ' peps_i'),
+    (' town ', ' tałn '),
+    ('debbie', 'debi'),
+    (' chi ', ' czi '),
+    ('ernshow', 'ernszoł'),
+    ('speech', 'spicz'),
+    ('bright', 'brajt'),
+    ('white', 'łajt'),
+    ('francesc', 'franczesk'),
+    ('skellige', 'skelige'),
+    ('percival', 'pers_iwal'),
+    ('chivay', 'cziwaj'),
+    ('djinn', 'dżin'),
+    ('incognito', 'inkognito'),
+    ('vilgefortz', 'vilgeforc'),
+    (' ciri', ' c_iri'),
+    (' metz ', ' mec '),
     
     # (' ', ''),
+    ('m.in.', 'między innymi '),
+    (' etc.', 'et_cetera '),
     # (' ', ''),
     ('x', 'ks'),
     ('sh', 'sz'),
     ('zż', 'z-ż'),
     ('rż', 'r-ż'),
+    ('ższ', 'ż_sz'),
+    ('ęk', 'ę_k'),
     ('ww', 'w_w'),
+    ('nn', 'n_n'),
+    ('ss', 's_s'),
+    ('tc', 't_c'),
+    ('dd', 'd_d'),
+    ('pp', 'p_p'),
+    ('tt', 't_t'),
+    ('zz', 'z_z'),
 ]
     
 def gen_rule(rule_tuple: Tuple[str, str]) -> Tuple[re.Pattern, str]:
@@ -245,6 +284,9 @@ prelower_rules = [
     ('Kate', 'Kejt'),
     ('Oate', 'Ołen'),
     ('Maisy', 'Mejz_i'),
+    (' Simon', ' Sajmon'),
+    (' Boyce', ' Bojs'),
+    (' Yennefer', ' Jenefer'),
 ]
 
 rules2 = [*map(gen_rule, prelower_rules)]
@@ -260,3 +302,11 @@ def shmart_replace(text: str) -> str:
         text = rule_from.sub(rule_to, text)
     
     return text
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-t', '--text', type=str, help='text to clean')
+    args = parser.parse_args()
+
+    print(shmart_replace(args.text))
