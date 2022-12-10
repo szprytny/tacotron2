@@ -29,10 +29,10 @@ def create_hparams(hparams_string=None, verbose=False):
         # Data Parameters             #
         ################################
         load_mel_from_disk=False,
-        training_files='D:/audio-datasety/MAN/train.txt',
-        validation_files='D:/audio-datasety/MAN/test.txt',
+        training_files='/content/wavs/train.txt',
+        validation_files='/content/wavs/test.txt',
         text_cleaners=['shmart_cleaner'],
-        speaker="Shmart",
+        speaker=None,
         include_styles=['normal', 'silenced'],
 
         ################################
