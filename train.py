@@ -43,6 +43,14 @@ def prepare_dataloaders(hparams):
     # Get data, data loaders and collate function ready
     trainset = TextMelLoader(hparams.training_files, hparams)
     valset = TextMelLoader(hparams.validation_files, hparams)
+    
+    amount_to_borrow = min(20, (len(trainset) + len(valset)) / 3) - len(valset)
+    if (amount_to_borrow > 0):
+      valset.audiopaths_and_text += trainset.audiopaths_and_text[-amount_to_borrow:]
+      trainset.audiopaths_and_text = trainset.audiopaths_and_text[0:-amount_to_borrow]
+      print(f"Adjusted dataset lengths. train: {len(trainset)}, test: {len(valset)}")
+
+
     collate_fn = TextMelCollate(hparams.n_frames_per_step)
 
     if hparams.distributed_run:
