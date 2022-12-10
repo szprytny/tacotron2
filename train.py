@@ -200,7 +200,7 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
     model.train()
     is_overflow = False
-    exit()
+    
     # ================ MAIN TRAINNIG LOOP! ===================
     for epoch in range(epoch_offset, hparams.epochs):
         print("Epoch: {}".format(epoch))
