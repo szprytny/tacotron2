@@ -63,7 +63,7 @@ def save_audio_to_drive(audio, file_name, output_dir):
 
 def mel_from_file(file_path):
   x = np.load(file_path)
-  mel_output = torch.FloatTensor(x).to(device).half()
+  mel_output = torch.FloatTensor(x).to(device)
   return mel_output, get_spec_from_mel(mel_output)
 
 def load_hifigan(filepath):

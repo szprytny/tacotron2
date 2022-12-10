@@ -25,21 +25,19 @@ def load_hifigan(filepath, device):
     print("Complete.")
     return checkpoint_dict
 
-
-waveglow = None
 denoiser = None
 model = load_model(hparams)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--model_path',
-                        help='Path to tacotron state dict', type=str, default='/users/user/downloads/shmart.pt')
+                        help='Path to tacotron state dict', type=str, default='/users/user/downloads/geralt.pt')
     parser.add_argument('-v', '--vocoder_path',
                         help='Path to vocoder state dict', type=str, default='/shmart/hifigan/cp_hifigan/g_latest')
     parser.add_argument('-t', '--text', help='Text to synthesize', type=str)
     parser.add_argument('-i', "--input_dir") #, default="input_mels/")
-    parser.add_argument('-b', "--book", help='path to ebook', default="/model/ojczyzna.txt")
-    parser.add_argument('-o', "--output_dir", default="out/")
+    parser.add_argument('-b', "--book", help='path to ebook', default="/model/bokp.txt")
+    parser.add_argument('-o', "--output_dir", default="/outdir/bokp")
     parser.add_argument("-s", "--sigma", default=0.667, type=float)
     args = parser.parse_args()
 

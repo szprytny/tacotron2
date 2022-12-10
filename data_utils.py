@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torch.utils.data
 import os
+from typing import List
 
 import layers
 from utils import load_wav_to_torch, load_filepaths_and_text
@@ -16,7 +17,7 @@ class TextMelLoader(torch.utils.data.Dataset):
         3) computes mel-spectrograms from audio files.
     """
     def __init__(self, audiopaths_and_text, hparams):
-        self.audiopaths_and_text = load_filepaths_and_text(audiopaths_and_text, hparams.speaker)
+        self.audiopaths_and_text = load_filepaths_and_text(audiopaths_and_text)
         self.audio_base_path = os.path.dirname(audiopaths_and_text)
         self.text_cleaners = hparams.text_cleaners
         self.max_wav_value = hparams.max_wav_value
@@ -28,6 +29,25 @@ class TextMelLoader(torch.utils.data.Dataset):
             hparams.mel_fmax)
         random.seed(hparams.seed)
         random.shuffle(self.audiopaths_and_text)
+
+        if hparams.speaker is not None:
+            self.audiopaths_and_text = self.filter_speaker(hparams.speaker)
+
+        
+        if hparams.include_styles is not None:
+            self.audiopaths_and_text = self.filter_styles(hparams.include_styles)
+
+    def filter_speaker(self, speaker: str):
+        current_len = len(self.audiopaths_and_text)
+        filtered_list = list(filter(lambda line: line[2] == speaker, self.audiopaths_and_text))
+        print(f"Filtered out {current_len - len(filtered_list)} other speakers files. {len(filtered_list)} files will be used for training")
+        return filtered_list
+
+    def filter_styles(self, styles: List[str]):
+        current_len = len(self.audiopaths_and_text)
+        filtered_list = list(filter(lambda line: line[3] in styles, self.audiopaths_and_text))
+        print(f"Filtered out {current_len - len(filtered_list)} other styles files. {len(filtered_list)} files will be used for training")
+        return filtered_list
 
     def get_mel_text_pair(self, audiopath_and_text):
         # separate filename and text

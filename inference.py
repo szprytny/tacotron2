@@ -1,16 +1,15 @@
-import sys
 import argparse
 import os
 import torch
-
-from infer_helpers import get_griffin_audio, get_waveglow_audio, line_to_text_sequence, load_hifigan, mel_from_file, save_audio_to_drive, text_sequence_to_mel_outputs, hparams, device
-sys.path.append('waveglow')
+import json
 import natsort 
 
+from infer_helpers import get_griffin_audio, get_waveglow_audio, line_to_text_sequence, load_hifigan, mel_from_file, save_audio_to_drive, text_sequence_to_mel_outputs, hparams, device
+
 from train import load_model
-from denoiser import Denoiser
 from hifigan_models import Generator, AttrDict
-import json
+from waveglow_denoiser import Denoiser
+import glow
   
 waveglow = None
 denoiser = None
@@ -20,15 +19,15 @@ model = load_model(hparams)
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--model_path',
-                        help='Path to tacotron state dict', type=str, default='tacotron_shmart.pt')
-    parser.add_argument('-w', '--vocoder_path',
-                        help='Path to waveglow state dict', type=str, default='waveglow_shmart.pt')
+                        help='Path to tacotron state dict', type=str, default='/outdir/models/tacotron/taco/yen.pt')
+    parser.add_argument('-v', '--vocoder_path',
+                        help='Path to vocoder state dict', type=str, default='/shmart/hifigan/cp_hifigan/g_latest')
     parser.add_argument('-t', '--text', help='Text to synthesize', type=str)
     parser.add_argument('-i', "--input_dir") #, default="input_mels/")
     parser.add_argument('--sentences', help='path to file with sentences to infer')
-    parser.add_argument('-o', "--output_dir", default="out/")
-    parser.add_argument("-s", "--sigma", default=0.5, type=float)
-    parser.add_argument('-v', "--vocoder", default='waveglow', type=str)
+    parser.add_argument('-o', "--output_dir", default="/outdir/synth")
+    parser.add_argument("-s", "--sigma", default=0.667, type=float)
+    parser.add_argument('-w', "--vocoder", default='hifigan', type=str)
     args = parser.parse_args()
 
     # Make directory if it doesn't exist
@@ -51,7 +50,7 @@ if __name__ == "__main__":
           generate_griffin = True
         elif vocoder == 'waveglow':
           waveglow = torch.load(args.vocoder_path)['model']
-          waveglow.cuda().eval().half()
+          waveglow.cuda().eval()
           for k in waveglow.convinv:
             k.float()
           denoiser = Denoiser(waveglow) 
@@ -63,7 +62,7 @@ if __name__ == "__main__":
           json_config = AttrDict(json.loads(data))
           generator = Generator(json_config).to(device)
 
-          state_dict_g = load_hifigan(args.vocoder_path, device)
+          state_dict_g = load_hifigan(args.vocoder_path)
           generator.load_state_dict(state_dict_g['generator'])
 
           generator.eval()
