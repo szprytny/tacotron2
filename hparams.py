@@ -33,7 +33,7 @@ def create_hparams(hparams_string=None, verbose=False):
         validation_files='/content/wavs/test.txt',
         text_cleaners=['shmart_cleaner'],
         speaker=None,
-        include_styles=['normal', 'silenced'],
+        include_styles=['normal', 'silenced', 'surprised'],
 
         ################################
         # Audio Parameters             #
@@ -62,8 +62,8 @@ def create_hparams(hparams_string=None, verbose=False):
         n_frames_per_step=1,  # currently only 1 is supported
         decoder_rnn_dim=1024,
         prenet_dim=256,
-        max_decoder_steps=3000,
-        gate_threshold=0.5,
+        max_decoder_steps=2400,
+        gate_threshold=0.1,
         p_attention_dropout=0.1,
         p_decoder_dropout=0.1,
 
@@ -84,8 +84,8 @@ def create_hparams(hparams_string=None, verbose=False):
         # Optimization Hyperparameters #
         ################################
         use_saved_learning_rate=False,
-        learning_rate=1e-3,
-        weight_decay=2e-3,
+        learning_rate=2e-4,
+        weight_decay=1e-2,
         grad_clip_thresh=1.0,
         batch_size=24,
         mask_padding=True  # set model's padded outputs to padded values
