@@ -44,7 +44,7 @@ def prepare_dataloaders(hparams):
     trainset = TextMelLoader(hparams.training_files, hparams)
     valset = TextMelLoader(hparams.validation_files, hparams)
     
-    amount_to_borrow = min(20, (len(trainset) + len(valset)) / 3) - len(valset)
+    amount_to_borrow = min(20, (len(trainset) + len(valset)) // 3) - len(valset)
     if (amount_to_borrow > 0):
       valset.audiopaths_and_text += trainset.audiopaths_and_text[-amount_to_borrow:]
       trainset.audiopaths_and_text = trainset.audiopaths_and_text[0:-amount_to_borrow]
