@@ -1,4 +1,5 @@
 from typing import List, Tuple
+from .shmart_nums import normalize_numbers
 import re
 
 rules_def: List[Tuple[str, str]] = [
@@ -90,6 +91,7 @@ rules_def: List[Tuple[str, str]] = [
     (' brown', ' brałn'),
     (' bush', ' busz'),
     (' carlos', ' karlos'),
+    ('castaneda', 'kastaneda'),
     (' carson', ' karson'),
     (' carter', ' karter'),
     ('catalina', ' katalina'),
@@ -231,6 +233,17 @@ rules_def: List[Tuple[str, str]] = [
     # (' ', ''),
     ('m.in.', 'między innymi '),
     (' etc.', 'et_cetera '),
+    ('ambrosij', 'ambroz_ij'),
+    ('colosseum', 'koloseum'),
+    ('au naturel', 'o natjurel'),
+    ('shakespeare', 'szekspir'),
+    (' menu ', ' meni '),
+    (' kaer ', ' ker '),
+    (' morhen', ' moren'),
+    (' tizian', ' ticjan'),
+    (' toussaint', ' tusą'),
+    
+    
     # (' ', ''),
     ('x', 'ks'),
     ('sh', 'sz'),
@@ -303,11 +316,13 @@ prelower_rules = [
     (' Simon', ' Sajmon'),
     (' Boyce', ' Bojs'),
     (' Yennefer', ' Jenefer'),
+    (' Neyd', ' Nejd'),
 ]
 
 rules2 = [*map(gen_rule, prelower_rules)]
 
 def shmart_replace(text: str) -> str:
+    text = normalize_numbers(text)
     for _, (rule_from, rule_to) in enumerate(rules2):
         text = rule_from.sub(rule_to, text)
 
