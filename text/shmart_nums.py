@@ -90,7 +90,7 @@ def _convertToWords(input: str):
 
 
 _number_re = re.compile(r"[0-9]+'s|[0-9]+s|[0-9]+\.?")
-_roman_re = re.compile(r'\b(?=[MDCLXVI]+\b)M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{1,3})\b')  # avoid I
+_roman_re = re.compile(r'\b(?=[MDCLXVI]+\b)M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{2,3})\b')  # avoid I
 
 def _expand_roman(m):
     # from https://stackoverflow.com/questions/19308177/converting-roman-numerals-to-integers-in-python
